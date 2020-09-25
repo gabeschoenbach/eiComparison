@@ -4,8 +4,11 @@ library(stringr)
 library(RxCEcolInf)
 library(sf)
 
-mainDir = '~/Desktop/mggg/eiComparison/'
-elec_data <- data.frame(read_csv(paste(mainDir, 'TX_cvap_for_EI.csv', sep="")))
+mainDir <- '~/Desktop/mggg/eiComparison/'
+resources <- 'resources/'
+output <- 'EI_outputs/run_X/'
+dir.create(file.path(mainDir, output))
+elec_data <- data.frame(read_csv(paste(mainDir, resources, 'TX_cvap_for_EI.csv', sep="")))
 
 elections <- c('12G_President')
 
@@ -23,18 +26,17 @@ for (e in elections){
 
   tune.nocov <- tuneMD(form, data = elec_data, ntunes = ntunes_val, totaldraws = tunedraws)
   out.nocov1 <- ei.MD.bayes(form,covariate = NULL, data = elec_data,tune.list = tune.nocov, ret.mcmc = TRUE, burnin = burnin_mcmc, thin = thin_mcmc)
-  
+
   mcmc_df <- data.frame(as.matrix(out.nocov1$draws$Cell.counts))
-  dir.create(file.path(mainDir, "outputs2/"))
-  
-  write.csv(mcmc_df,paste(mainDir,"outputs2/",e,"_EISAMPLES.csv",sep = ""))
+
+  write.csv(mcmc_df,paste(mainDir,output,e,"_EISAMPLES.csv",sep = ""))
 
   mcmc_df_prec <- as.matrix(out.nocov1$draws$Beta)
   x <- colMeans(mcmc_df_prec)
   y <- apply(mcmc_df_prec, 2, sd)
   probs <- c(0:8/8)
   q_0 <- apply(mcmc_df_prec, MARGIN = 2, FUN = quantile, probs = probs)
-  write.csv(t(q_0), paste(mainDir,"outputs2/",e,"_prec_quants.csv",sep = ""))
-  write.csv(x, paste(mainDir,"outputs2/",e,"_prec_means.csv",sep = ""))
-  write.csv(y, paste(mainDir,"outputs2/",e,"_prec_sd.csv",sep = ""))
+  write.csv(t(q_0), paste(mainDir,output,e,"_prec_quants.csv",sep = ""))
+  write.csv(x, paste(mainDir,output,e,"_prec_means.csv",sep = ""))
+  write.csv(y, paste(mainDir,output,e,"_prec_sd.csv",sep = ""))
 }
